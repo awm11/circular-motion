@@ -127,6 +127,8 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
   <div id="viewbtns">
     <button id="btnTop">Bird's-eye view</button>
     <button id="btn3d">3D view</button>
+    <button id="zOut" title="Zoom out" style="font-size:16px;padding:6px 13px">−</button>
+    <button id="zIn" title="Zoom in" style="font-size:16px;padding:6px 13px">+</button>
   </div>
   <div class="card" id="legend">
     <span><i style="background:var(--fric)"></i>Friction</span>
@@ -278,7 +280,7 @@ camera.position.set(0.62, 0.5, 0.68);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0,0,0);
 controls.enableDamping = true;
-controls.minDistance = 0.15; controls.maxDistance = 4;
+controls.minDistance = 0.15; controls.maxDistance = 5; controls.zoomSpeed = 2.5;
 controls.maxPolarAngle = Math.PI*0.495;
 
 // flat, orthographic bird's-eye camera (no perspective)
@@ -287,7 +289,7 @@ const ortho = new THREE.OrthographicCamera(-ORTHO_H/2,ORTHO_H/2,ORTHO_H/2,-ORTHO
 ortho.position.set(0,2,0); ortho.up.set(0,0,-1); ortho.lookAt(0,0,0);
 const orthoControls = new OrbitControls(ortho, renderer.domElement);
 orthoControls.enableRotate = false; orthoControls.screenSpacePanning = true;
-orthoControls.minZoom = 0.5; orthoControls.maxZoom = 8; orthoControls.enabled = false;
+orthoControls.minZoom = 0.15; orthoControls.maxZoom = 10; orthoControls.zoomSpeed = 2.5; orthoControls.enabled = false;
 let birdsEye = false;
 function setBirdsEye(on){
   birdsEye = on; controls.enabled = !on; orthoControls.enabled = on;
@@ -574,6 +576,13 @@ document.querySelectorAll('#speedSeg button').forEach(b=>b.addEventListener('cli
 // camera views
 let camTween=null;
 function goView(pos, done){ camTween={t:0, p0:camera.position.clone(), p1:pos.clone(), t0:controls.target.clone(), done}; }
+function zoomBy(f){   // f>1 zooms out
+  if(birdsEye){ ortho.zoom = THREE.MathUtils.clamp(ortho.zoom/f, orthoControls.minZoom, orthoControls.maxZoom); ortho.updateProjectionMatrix(); }
+  else { const off = camera.position.clone().sub(controls.target); const d = THREE.MathUtils.clamp(off.length()*f, controls.minDistance, controls.maxDistance);
+    camera.position.copy(controls.target).add(off.setLength(d)); }
+}
+$('zOut').addEventListener('click',()=>zoomBy(1.4));
+$('zIn').addEventListener('click',()=>zoomBy(1/1.4));
 $('btnTop').addEventListener('click',()=>{ if(!birdsEye) goView(new THREE.Vector3(0,1.25,0.0001), ()=>setBirdsEye(true)); });
 $('btn3d').addEventListener('click',()=>{ if(birdsEye){ setBirdsEye(false); camera.position.set(0,1.25,0.0001); controls.target.set(0,0,0); controls.update(); } goView(new THREE.Vector3(0.62,0.5,0.68)); });
 
