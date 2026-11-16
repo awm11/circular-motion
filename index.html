@@ -129,6 +129,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
     <button id="btn3d">3D view</button>
     <button id="zOut" title="Zoom out" style="font-size:16px;padding:6px 13px">−</button>
     <button id="zIn" title="Zoom in" style="font-size:16px;padding:6px 13px">+</button>
+    <button id="zReset" title="Reset zoom and position">Reset zoom</button>
   </div>
   <div class="card" id="legend">
     <span><i style="background:var(--fric)"></i>Friction</span>
@@ -575,14 +576,38 @@ document.querySelectorAll('#speedSeg button').forEach(b=>b.addEventListener('cli
 
 // camera views
 let camTween=null;
+const V0 = new THREE.Vector3(0.62,0.5,0.68);
 function goView(pos, done){ camTween={t:0, p0:camera.position.clone(), p1:pos.clone(), t0:controls.target.clone(), done}; }
 function zoomBy(f){   // f>1 zooms out
   if(birdsEye){ ortho.zoom = THREE.MathUtils.clamp(ortho.zoom/f, orthoControls.minZoom, orthoControls.maxZoom); ortho.updateProjectionMatrix(); }
   else { const off = camera.position.clone().sub(controls.target); const d = THREE.MathUtils.clamp(off.length()*f, controls.minDistance, controls.maxDistance);
     camera.position.copy(controls.target).add(off.setLength(d)); }
 }
+// dragging (left button) in bird's-eye tips you back into the 3D perspective view
+let beDrag=null;
+renderer.domElement.addEventListener('pointerdown',e=>{ if(birdsEye && e.button===0) beDrag={id:e.pointerId,x:e.clientX,y:e.clientY,type:e.pointerType}; });
+window.addEventListener('pointerup',()=>beDrag=null);
+renderer.domElement.addEventListener('pointermove',e=>{
+  if(!beDrag || !birdsEye || e.pointerId!==beDrag.id) return;
+  if(Math.hypot(e.clientX-beDrag.x, e.clientY-beDrag.y) < 5) return;
+  // match the perspective camera to what the flat view was showing, then hand the drag over
+  const t = orthoControls.target.clone();
+  const dist = (ORTHO_H/ortho.zoom)/2 / Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  setBirdsEye(false); camTween=null;
+  controls.target.copy(t); camera.position.set(t.x, t.y+THREE.MathUtils.clamp(dist,controls.minDistance,controls.maxDistance), t.z+0.0001);
+  controls.update();
+  const b=beDrag; beDrag=null;
+  try{ renderer.domElement.dispatchEvent(new PointerEvent('pointerdown',{pointerId:b.id,pointerType:b.type,isPrimary:true,clientX:b.x,clientY:b.y,button:0,buttons:1,bubbles:true})); }catch(_){}
+});
 $('zOut').addEventListener('click',()=>zoomBy(1.4));
 $('zIn').addEventListener('click',()=>zoomBy(1/1.4));
+$('zReset').addEventListener('click',()=>{
+  if(birdsEye){ ortho.zoom=1; ortho.position.set(0,2,0); orthoControls.target.set(0,0,0); ortho.updateProjectionMatrix(); }
+  else {   // keep the current viewing angle, restore the default distance and centre
+    const off = camera.position.clone().sub(controls.target).setLength(V0.length());
+    goView(off);
+  }
+});
 $('btnTop').addEventListener('click',()=>{ if(!birdsEye) goView(new THREE.Vector3(0,1.25,0.0001), ()=>setBirdsEye(true)); });
 $('btn3d').addEventListener('click',()=>{ if(birdsEye){ setBirdsEye(false); camera.position.set(0,1.25,0.0001); controls.target.set(0,0,0); controls.update(); } goView(new THREE.Vector3(0.62,0.5,0.68)); });
 
