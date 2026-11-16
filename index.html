@@ -212,7 +212,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
         <option value="both" selected>both</option>
       </select>
     </div>
-    <div class="hint">Ground frame (amber): the path you'd see from the room. Turntable frame (cyan): the path an ant riding the turntable would see.</div>
+    <div class="hint">Ground frame (pink): the path you'd see from the room. Turntable frame (cyan): the path an ant riding the turntable would see.</div>
   </section>
   <section>
     <h2>Equations (live)</h2>
@@ -380,10 +380,15 @@ function coinFace(){
   x.fillStyle='rgba(90,60,10,.75)'; x.font='bold 96px Inter, sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('m',N/2,N/2+4);
   const t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; return t;
 }
-const coinSide = new THREE.MeshStandardMaterial({color:0xc8963c, metalness:.9, roughness:.35});
-const coinTop = new THREE.MeshStandardMaterial({map:coinFace(), metalness:.75, roughness:.32});
+const coinSide = new THREE.MeshStandardMaterial({color:0xffc94a, metalness:.8, roughness:.3, emissive:0x5a3a00});
+const coinTop = new THREE.MeshStandardMaterial({map:coinFace(), metalness:.55, roughness:.3, emissive:0x4a3000});
 const coin = new THREE.Mesh(new THREE.CylinderGeometry(COIN_R,COIN_R,COIN_H,48), [coinSide, coinTop, coinTop]);
 coin.castShadow = true; scene.add(coin);
+// high-contrast halo (dark ring inside a white ring) so the coin stands out on every surface
+for(const [r0,r1,col] of [[COIN_R*0.98,COIN_R*1.22,0x000000],[COIN_R*1.22,COIN_R*1.42,0xffffff]]){
+  const ring = new THREE.Mesh(new THREE.RingGeometry(r0,r1,48), new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:.9, depthWrite:false}));
+  ring.rotation.x = -Math.PI/2; ring.position.y = -COIN_H/2 + 0.0003; coin.add(ring);
+}
 
 // dashed ring at the set radius (ground frame, doesn't rotate)
 const ringGeo = new THREE.BufferGeometry().setFromPoints(Array.from({length:181},(_,i)=>{const a=i/180*Math.PI*2;return new THREE.Vector3(Math.cos(a),0,Math.sin(a));}));
@@ -455,7 +460,7 @@ function makeTrail(hex, parent){
     clear(){ this.n=0; this.dirty=false; this.line.geometry.dispose(); this.line.geometry=new LineGeometry(); }
   };
 }
-const trailGround = makeTrail(0xffb84d, scene);
+const trailGround = makeTrail(0xff3fd2, scene);
 const trailTable  = makeTrail(0x45d6ff, table);
 
 // ---------- physics ----------
