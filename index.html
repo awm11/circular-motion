@@ -281,22 +281,8 @@ camera.position.set(0.62, 0.5, 0.68);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0,0,0);
 controls.enableDamping = true;
-controls.minDistance = 0.15; controls.maxDistance = 5; controls.zoomSpeed = 2.5;
+controls.minDistance = 0.15; controls.maxDistance = 5; 
 controls.maxPolarAngle = Math.PI*0.495;
-
-// flat, orthographic bird's-eye camera (no perspective)
-const ORTHO_H = 0.82;
-const ortho = new THREE.OrthographicCamera(-ORTHO_H/2,ORTHO_H/2,ORTHO_H/2,-ORTHO_H/2,0.01,10);
-ortho.position.set(0,2,0); ortho.up.set(0,0,-1); ortho.lookAt(0,0,0);
-const orthoControls = new OrbitControls(ortho, renderer.domElement);
-orthoControls.enableRotate = false; orthoControls.screenSpacePanning = true;
-orthoControls.minZoom = 0.15; orthoControls.maxZoom = 10; orthoControls.zoomSpeed = 2.5; orthoControls.enabled = false;
-let birdsEye = false;
-function setBirdsEye(on){
-  birdsEye = on; controls.enabled = !on; orthoControls.enabled = on;
-  if(on){ ortho.zoom = 1; orthoControls.target.set(0,0,0); ortho.position.set(0,2,0); ortho.updateProjectionMatrix(); }
-  document.getElementById('btnTop').classList.toggle('on', on);
-}
 
 scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x1a1a22, 0.6));
 const sun = new THREE.DirectionalLight(0xffffff, 1.6);
@@ -579,37 +565,19 @@ let camTween=null;
 const V0 = new THREE.Vector3(0.62,0.5,0.68);
 function goView(pos, done){ camTween={t:0, p0:camera.position.clone(), p1:pos.clone(), t0:controls.target.clone(), done}; }
 function zoomBy(f){   // f>1 zooms out
-  if(birdsEye){ ortho.zoom = THREE.MathUtils.clamp(ortho.zoom/f, orthoControls.minZoom, orthoControls.maxZoom); ortho.updateProjectionMatrix(); }
-  else { const off = camera.position.clone().sub(controls.target); const d = THREE.MathUtils.clamp(off.length()*f, controls.minDistance, controls.maxDistance);
+  { const off = camera.position.clone().sub(controls.target); const d = THREE.MathUtils.clamp(off.length()*f, controls.minDistance, controls.maxDistance);
     camera.position.copy(controls.target).add(off.setLength(d)); }
 }
-// dragging (left button) in bird's-eye tips you back into the 3D perspective view
-let beDrag=null;
-renderer.domElement.addEventListener('pointerdown',e=>{ if(birdsEye && e.button===0) beDrag={id:e.pointerId,x:e.clientX,y:e.clientY,type:e.pointerType}; });
-window.addEventListener('pointerup',()=>beDrag=null);
-renderer.domElement.addEventListener('pointermove',e=>{
-  if(!beDrag || !birdsEye || e.pointerId!==beDrag.id) return;
-  if(Math.hypot(e.clientX-beDrag.x, e.clientY-beDrag.y) < 5) return;
-  // match the perspective camera to what the flat view was showing, then hand the drag over
-  const t = orthoControls.target.clone();
-  const dist = (ORTHO_H/ortho.zoom)/2 / Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-  setBirdsEye(false); camTween=null;
-  controls.target.copy(t); camera.position.set(t.x, t.y+THREE.MathUtils.clamp(dist,controls.minDistance,controls.maxDistance), t.z+0.0001);
-  controls.update();
-  const b=beDrag; beDrag=null;
-  try{ renderer.domElement.dispatchEvent(new PointerEvent('pointerdown',{pointerId:b.id,pointerType:b.type,isPrimary:true,clientX:b.x,clientY:b.y,button:0,buttons:1,bubbles:true})); }catch(_){}
-});
 $('zOut').addEventListener('click',()=>zoomBy(1.4));
 $('zIn').addEventListener('click',()=>zoomBy(1/1.4));
 $('zReset').addEventListener('click',()=>{
-  if(birdsEye){ ortho.zoom=1; ortho.position.set(0,2,0); orthoControls.target.set(0,0,0); ortho.updateProjectionMatrix(); }
-  else {   // keep the current viewing angle, restore the default distance and centre
+  {   // keep the current viewing angle, restore the default distance and centre
     const off = camera.position.clone().sub(controls.target).setLength(V0.length());
     goView(off);
   }
 });
-$('btnTop').addEventListener('click',()=>{ if(!birdsEye) goView(new THREE.Vector3(0,1.25,0.0001), ()=>setBirdsEye(true)); });
-$('btn3d').addEventListener('click',()=>{ if(birdsEye){ setBirdsEye(false); camera.position.set(0,1.25,0.0001); controls.target.set(0,0,0); controls.update(); } goView(new THREE.Vector3(0.62,0.5,0.68)); });
+$('btnTop').addEventListener('click',()=>goView(new THREE.Vector3(0,1.25,0.0001)));
+$('btn3d').addEventListener('click',()=>goView(new THREE.Vector3(0.62,0.5,0.68)));
 
 // init UI
 $('rVal').textContent=`${(S.r*100).toFixed(1)} cm`; $('mVal').textContent=`${mS.value} g`;
@@ -655,8 +623,7 @@ function updateReadout(){
 }
 
 // ---------- render loop ----------
-function resize(){ const w=view.clientWidth, h=view.clientHeight; renderer.setSize(w,h,false); for(const m of trailMats) m.resolution.set(w,h); camera.aspect=w/h; camera.updateProjectionMatrix();
-  const a=w/h; ortho.left=-ORTHO_H/2*a; ortho.right=ORTHO_H/2*a; ortho.top=ORTHO_H/2; ortho.bottom=-ORTHO_H/2; ortho.updateProjectionMatrix(); }
+function resize(){ const w=view.clientWidth, h=view.clientHeight; renderer.setSize(w,h,false); for(const m of trailMats) m.resolution.set(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
 new ResizeObserver(resize).observe(view); resize();
 document.getElementById('roToggle').addEventListener('click',()=>{
   const c=document.getElementById('readout'); const hid=c.classList.toggle('collapsed');
@@ -692,7 +659,7 @@ function frame(now){
   if(show.forces){
     const F=S.fric, Fl=len(F);
     if(onTable && Fl>0) A.fric.set(top, V(F.x,0,-F.y), FSCALE*Fl, FK); else A.fric.hide();
-    const topDown = birdsEye || controls.getPolarAngle() < 0.18;   // ~10° from vertical = bird's-eye
+    const topDown = controls.getPolarAngle() < 0.18;   // ~10° from vertical = bird's-eye
     if(!topDown) A.wt.set(P, V(0,-1,0), FSCALE*mg, FK); else A.wt.hide();
     if(onTable && !topDown) A.norm.set(top, V(0,1,0), FSCALE*mg, FK); else A.norm.hide();
   } else { A.fric.hide(); A.wt.hide(); A.norm.hide(); }
@@ -708,8 +675,8 @@ function frame(now){
     controls.target.lerpVectors(camTween.t0,V(0,0,0),e);
     if(camTween.t>=1){ const d=camTween.done; camTween=null; d&&d(); }
   }
-  if(birdsEye){ orthoControls.update(); renderer.render(scene,ortho); }
-  else { controls.update(); renderer.render(scene,camera); }
+  controls.update();
+  renderer.render(scene,camera);
 
   roAcc+=dt; if(roAcc>0.066){ roAcc=0; updateReadout(); }
 }
