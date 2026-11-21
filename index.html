@@ -27,9 +27,12 @@ h1{font-family:var(--serif);font-weight:500;font-size:22.3px;margin:0 0 2px;font
 .brand-mark{flex:none;display:block;width:34px;height:34px;border-radius:8px;transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
 .brand-mark img{display:block;width:100%;height:100%}
 .brand-mark:hover,.brand-mark:focus-visible{transform:scale(1.1) rotate(8deg)}
-.support{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap;border-top:1px solid var(--line);padding:12px 0 6px}
+.support{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;border-top:1px solid var(--line);padding:12px 0 6px}
 .support .mail{color:var(--accent);text-decoration:none;font-size:18.3px}
-.support .mail:hover{text-decoration:underline}
+.support .mail:hover,.support .more:hover{text-decoration:underline}
+.support .more{display:inline-flex;align-items:center;gap:8px;color:var(--text);text-decoration:none;font-size:18.3px}
+.support .more img{border-radius:7px;transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
+.support .more:hover img{transform:scale(1.1) rotate(8deg)}
 .coffee-embed-frame{--coffee-scale:.72;display:block;flex:none;width:calc(250px*var(--coffee-scale));height:calc(60px*var(--coffee-scale));overflow:hidden;border-radius:10px;background:#ffdd00;box-shadow:0 8px 22px rgba(0,0,0,.38);transition:transform .15s ease}
 .coffee-embed-frame:hover{transform:translateY(-1px)}
 .coffee-embed{display:block;width:250px;height:60px;border:0;transform:scale(var(--coffee-scale));transform-origin:0 0}
@@ -255,6 +258,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
     </div>
   </section>
   <div class="support">
+    <a class="more" href="https://alexmoorephysics.com/"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTQiIGZpbGw9IiMyNDRiNjEiLz4KCiAgPHBhdGggZD0iTTEzIDUxIDI5LjUgMTIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiZDdmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8cGF0aCBkPSJtMjkuNSAxMiAxOSAzOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZjdlZWUwIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0yMSAzNmgxOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN2VlMmE4IiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgoKICA8cGF0aCBkPSJNNDUgNDhjNS01IDctMTEgNy0xOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZjMTZmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBvcGFjaXR5PSIuOCIvPgogIDxjaXJjbGUgY3g9IjUyIiBjeT0iMjciIHI9IjUuNSIgZmlsbD0iI2ZmYjM1NiIgc3Ryb2tlPSIjMjQ0YjYxIiBzdHJva2Utd2lkdGg9IjIiLz4KPC9zdmc+Cg==" alt="" width="28" height="28">More simulations</a>
     <a class="mail" href="mailto:hello@alexmoorephysics.com">hello@alexmoorephysics.com</a>
     <span class="coffee-embed-frame"><iframe class="coffee-embed" title="Buy me a coffee" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;en&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;style&gt;html,body{width:250px;height:60px;margin:0;overflow:hidden;background:#FFDD00}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js&quot; data-name=&quot;bmc-button&quot; data-slug=&quot;awmPhysics&quot; data-color=&quot;#FFDD00&quot; data-emoji=&quot;&quot; data-font=&quot;Lato&quot; data-text=&quot;Buy me a coffee&quot; data-outline-color=&quot;#000000&quot; data-font-color=&quot;#000000&quot; data-coffee-color=&quot;#ffffff&quot;&gt;&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></span>
   </div>
