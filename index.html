@@ -263,7 +263,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
     <div class="eq" id="eq"></div>
     <div class="notes"><div class="note">The motor ramps to the new speed at 4 rad s⁻². While it speeds up, friction must also supply a tangential force, so a coin near the limit can slip during spin-up.</div>
     <div class="note">The mass cancels in mω²r ≤ μ<sub>s</sub>mg, so the critical speed doesn't depend on m. Try changing the mass while the coin is close to slipping.</div>
-    <div class="note">Once slipping, kinetic friction (μ<sub>k</sub> &lt; μ<sub>s</sub>) acts against the coin's motion <i>relative to the surface</i>. It's too weak to hold a circle, so the coin spirals outwards and eventually leaves the table on a near-tangent.</div>
+    <div class="note">Once slipping, kinetic friction<br>(μ<sub>k</sub> &lt; μ<sub>s</sub>) acts against the coin's motion <i>relative to the surface</i>. It's too weak to hold a circle, so the coin spirals outwards and eventually leaves the table on a near-tangent.</div>
     </div>
   </section>
   <div class="support">
@@ -314,7 +314,7 @@ const len = a=>Math.hypot(a.x,a.y);
 // ---------- renderer / scene ----------
 const view = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));   // capped: big win on high-DPI screens, barely visible
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));   // starting point; adaptive quality adjusts it (see Q below)
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -531,7 +531,7 @@ const FSCALE0 = 0.6;   // metres of arrow per newton at 1× (absolute scale, so 
 let FK = 1, FSCALE = FSCALE0;
 
 // ---------- trails ----------
-const TMAX = 6000, TRAIL_PX = 4;
+const TMAX = 20000, TRAIL_PX = 4, TRAIL_DT = 0.002;   // trail point every 2 ms of simulated time
 const trailMats = [];
 function makeTrail(hex, parent){
   const mat = new LineMaterial({color:hex, linewidth:TRAIL_PX, transparent:true, opacity:.95, worldUnits:false});
@@ -595,6 +595,15 @@ function updateArc(){
     }
     arcBands[i].buf.needsUpdate=true;
   }
+}
+let trailClock = 0;
+function recordTrail(){
+  if(S.state!=='grip' && !arcFrozen){
+    // first slip: bring the fading arc right up to the slip point, freeze it, and start the full trail there
+    arcAccum += Math.abs(S.theta-lastTheta); lastTheta=S.theta; updateArc(); arcFrozen=true;
+  }
+  if(arcFrozen && (S.state!=='landed' || len(S.v)>0)) trailGround.push(S.p.x, S.y-COIN_H/2+0.0012, -S.p.y);
+  if(S.state==='grip'||S.state==='slip'){ const l=rot(S.p,-S.theta); trailTable.push(l.x, 0.0012, -l.y); }
 }
 function clearArc(){ arcAccum=0; arcFrozen=false; lastTheta=S.theta; }
 
@@ -781,8 +790,57 @@ document.getElementById('roToggle').addEventListener('click',()=>{
 
 const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 let last=performance.now(), roAcc=0, trailSync=0, dtAvg=0;
+// ---------- adaptive quality ----------
+// Watches how long frames really take. If the device can't keep up with the screen's refresh rate it
+// steps down: lower drawing resolution, then shadows off, then a steady half frame rate (smoother
+// than an uneven one). When there's headroom for a few seconds it steps back up, but never above a
+// level that has already proved too slow.
+const Q = (()=>{
+  const maxDPR = Math.min(devicePixelRatio||1, 2);
+  const levels = [2,1.75,1.5,1.25,1,0.85,0.75].filter(v=>v<=maxDPR+1e-6);
+  if(!levels.length || levels[0]<maxDPR-1e-6) levels.unshift(maxDPR);
+  let i = levels.findIndex(v=>v<=1.5+1e-6); if(i<0) i=levels.length-1;
+  // extra steps beyond resolution: shadows off, then half rate
+  const steps = levels.length + 2;
+  let step = i, cap = 0, sum = 0, n = 0, winStart = 0, good = 0, cool = 3, refresh = 1/60, skip = false;
+  function apply(){
+    const k = Math.min(step, levels.length-1);
+    renderer.setPixelRatio(levels[k]); resize();
+    const shadows = step < levels.length;
+    if(sun.castShadow !== shadows) sun.castShadow = shadows;
+  }
+  return {
+    get half(){ return step >= levels.length+1; },
+    get dpr(){ return levels[Math.min(step, levels.length-1)]; },
+    shouldSkip(){ if(!this.half) return false; skip = !skip; return skip; },
+    sample(now, rawMs){
+      if(rawMs > 200 || document.hidden){ sum=0; n=0; winStart=now; return; }   // tab switch etc.
+      sum += rawMs; n++;
+      if(!winStart) winStart = now;
+      if(now - winStart < 1000) return;
+      const avg = sum/n/1000; sum=0; n=0; winStart=now;
+      // display refresh: the fastest window seen so far, but never slower than 60 Hz
+      // (so a struggling device isn't mistaken for a slow screen)
+      refresh = Math.max(1/240, Math.min(refresh, 1/60, avg/(this.half?2:1)));
+      if(cool>0){ cool--; return; }
+      const expect = refresh*(this.half?2:1);
+      if(avg > expect*1.25 && step < steps-1){            // dropping frames: step down
+        if(good===0 && step>0) cap = Math.max(cap, step);   // the level we just tried was too much
+        step++; good=0; cool=1; apply();
+      } else if(avg < expect*1.08){                          // comfortable
+        if(++good >= 4 && step > cap){ step--; good=0; cool=2; apply(); }
+      } else good = 0;
+    },
+    init(){ apply(); }
+  };
+})();
+
+let lastDrawn=performance.now();
+Q.init();
 function frame(now){
   requestAnimationFrame(frame);
+  if(Q.shouldSkip()) return;          // half-rate mode: draw every other screen refresh
+  Q.sample(now, now-lastDrawn); lastDrawn=now;
   // Smooth the frame time: rAF callbacks jitter by a millisecond or two even though frames are shown
   // at a steady rate, and feeding that jitter straight into the motion makes the spin look uneven.
   const raw=Math.min((now-last)/1000, 0.05); last=now;
@@ -791,7 +849,8 @@ function frame(now){
   let dt = Math.abs(raw-dtAvg) < dtAvg*0.5 ? dtAvg : raw;
   if(!S.paused){
     let sim=dt*S.timeScale; const h=0.0005;
-    while(sim>1e-9){ const s=Math.min(h,sim); step(s); sim-=s; }
+    while(sim>1e-9){ const s=Math.min(h,sim); step(s); sim-=s; trailClock+=s;
+      if(trailClock>=TRAIL_DT || (S.state!=='grip' && !arcFrozen)){ trailClock=0; recordTrail(); } }
   }
   table.rotation.y = S.theta;
   ring.scale.set(S.r,1,S.r);
@@ -801,10 +860,7 @@ function frame(now){
 
   // trails
   if(!S.paused){
-    if(S.state!=='grip' && !arcFrozen){ arcFrozen=true; }              // first slip: freeze the fading arc
-    if(arcFrozen){ if(S.state!=='landed' || len(S.v)>0) trailGround.push(S.p.x, S.y-COIN_H/2+0.0012, -S.p.y); }
-    else { arcAccum += Math.abs(S.theta-lastTheta); updateArc(); }
-    if(S.state==='grip'||S.state==='slip'){ const l=rot(S.p,-S.theta); trailTable.push(l.x, 0.0012, -l.y); }
+    if(!arcFrozen){ arcAccum += Math.abs(S.theta-lastTheta); updateArc(); }
   }
   lastTheta=S.theta;
   trailGround.sync(); trailTable.sync();
