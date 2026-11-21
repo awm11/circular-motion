@@ -536,12 +536,13 @@ function step(dt){
   }
   if(S.state==='landed'){
     const sp=len(S.v);
+    // sliding friction on the base/floor (μ = 0.4) until it stops
+    S.fric = sp>1e-6 ? {x:-0.4*S.m*g*S.v.x/sp, y:-0.4*S.m*g*S.v.y/sp} : {x:0,y:0};
     if(sp>0){ const dv=0.4*g*dt; const k=Math.max(0,sp-dv)/sp; S.v.x*=k; S.v.y*=k; }
     S.p = {x:S.p.x+S.v.x*dt, y:S.p.y+S.v.y*dt};
     const onPlinth = Math.abs(S.p.x)<PLINTH && Math.abs(S.p.y)<PLINTH;
     if(!onPlinth && S.y > FLOOR+COIN_H/2+1e-4){ S.state='fall'; }
     S.spin *= Math.exp(-3*dt); S.yaw += S.spin*dt;
-    S.fric={x:0,y:0};
   }
 }
 
@@ -634,7 +635,7 @@ function updateReadout(){
   $('o_F').textContent = `${sig(Fact)} N`;
   $('o_Fc').textContent = onTable?`${sig(S.m*aC)} N`:'—';
   $('o_W').textContent = `${sig(S.m*g)} N`;
-  $('o_R').textContent = onTable?`${sig(S.m*g)} N`:'0 N';
+  $('o_R').textContent = S.state!=='fall'?`${sig(S.m*g)} N`:'0 N';
   const ratio = onTable ? Fneed/Fmax : 0;
   $('o_ratio').textContent = onTable?fmt(ratio,2):'—';
   const fill=$('g_fill'); fill.style.width = Math.min(ratio/1.5,1)*100+'%';
@@ -685,14 +686,14 @@ function frame(now){
   trailTable.line.visible  = show.trail && show.frame!=='ground' && trailTable.n>1;
 
   // arrows
-  const mg=S.m*g, onTable=S.state==='grip'||S.state==='slip';
+  const mg=S.m*g, onTable=S.state==='grip'||S.state==='slip', onSurface=S.state!=='fall';
   const top = P.clone().add(V(0,COIN_H/2+0.001,0));
   if(show.forces){
     const F=S.fric, Fl=len(F);
-    if(onTable && Fl>0) A.fric.set(top, V(F.x,0,-F.y), FSCALE*Fl, FK); else A.fric.hide();
+    if(onSurface && Fl>0) A.fric.set(top, V(F.x,0,-F.y), FSCALE*Fl, FK); else A.fric.hide();
     const topDown = controls.getPolarAngle() < 0.18;   // ~10° from vertical = bird's-eye
     if(!topDown) A.wt.set(P, V(0,-1,0), FSCALE*mg, FK); else A.wt.hide();
-    if(onTable && !topDown) A.norm.set(top, V(0,1,0), FSCALE*mg, FK); else A.norm.hide();
+    if(onSurface && !topDown) A.norm.set(top, V(0,1,0), FSCALE*mg, FK); else A.norm.hide();
   } else { A.fric.hide(); A.wt.hide(); A.norm.hide(); }
   if(show.need && S.state==='slip'){ const N=S.aReq; A.need.set(top.clone().add(V(0,0.0015,0)), V(N.x,0,-N.y), FSCALE*S.m*len(N), FK); } else A.need.hide();
   if(show.vel && S.state!=='landed'){ const v=S.v, vl=len(v); A.vel.set(top.clone().add(V(0,0.003,0)), V(v.x,0,-v.y), Math.min(0.05*vl,0.35)); }
