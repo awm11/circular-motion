@@ -353,14 +353,14 @@ plinth.position.y = (PLINTH_TOP+FLOOR)/2; plinth.receiveShadow = plinth.castShad
 {
   const silver = new THREE.MeshStandardMaterial({color:0xd9dde3, metalness:1, roughness:.22});
   const dark = new THREE.MeshStandardMaterial({color:0x22262c, metalness:.3, roughness:.6});
-  for(const [kx,kz,turn] of [[0.318,0.385,0.6],[0.378,0.385,-0.9]]){   // side by side along the front edge
+  for(const [kx,kz,turn] of [[0.300,0.385,0.6],[0.390,0.385,-0.9]]){   // side by side along the front edge
     const knob = new THREE.Group();
     const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.019,0.02,0.004,40), silver); skirt.position.y=0.002;
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.0145,0.016,0.014,24), silver); body.position.y=0.011;  // 24 flats read as knurling
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.0125,0.0145,0.002,40), silver); cap.position.y=0.019;
     const mark = new THREE.Mesh(new THREE.BoxGeometry(0.0022,0.0008,0.009), dark); mark.position.set(0,0.0204,-0.006);
     for(const m of [skirt,body,cap]){ m.castShadow=true; m.receiveShadow=true; }
-    knob.add(skirt,body,cap,mark); knob.position.set(kx,PLINTH_TOP,kz); knob.rotation.y=turn; scene.add(knob);
+    knob.add(skirt,body,cap,mark); knob.position.set(kx,PLINTH_TOP,kz); knob.rotation.y=turn; knob.scale.setScalar(1.5); scene.add(knob);
   }
 }
 
