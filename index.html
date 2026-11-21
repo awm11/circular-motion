@@ -314,9 +314,9 @@ const len = a=>Math.hypot(a.x,a.y);
 // ---------- renderer / scene ----------
 const view = document.getElementById('view');
 const renderer = new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));   // capped: big win on high-DPI screens, barely visible
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 view.prepend(renderer.domElement);
 
@@ -780,10 +780,15 @@ document.getElementById('roToggle').addEventListener('click',()=>{
   document.querySelector('#roToggle span').textContent = hid?'Show values':'Hide values'; });
 
 const V=(x,y,z)=>new THREE.Vector3(x,y,z);
-let last=performance.now(), roAcc=0, trailSync=0;
+let last=performance.now(), roAcc=0, trailSync=0, dtAvg=0;
 function frame(now){
   requestAnimationFrame(frame);
-  let dt=Math.min((now-last)/1000, 0.05); last=now;
+  // Smooth the frame time: rAF callbacks jitter by a millisecond or two even though frames are shown
+  // at a steady rate, and feeding that jitter straight into the motion makes the spin look uneven.
+  const raw=Math.min((now-last)/1000, 0.05); last=now;
+  if(!dtAvg) dtAvg=raw;
+  dtAvg = Math.abs(raw-dtAvg) < dtAvg*0.5 ? dtAvg*0.9+raw*0.1 : raw;   // real hitches pass straight through
+  let dt = Math.abs(raw-dtAvg) < dtAvg*0.5 ? dtAvg : raw;
   if(!S.paused){
     let sim=dt*S.timeScale; const h=0.0005;
     while(sim>1e-9){ const s=Math.min(h,sim); step(s); sim-=s; }
