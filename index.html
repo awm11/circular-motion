@@ -317,7 +317,7 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 const camera = new THREE.PerspectiveCamera(40, 1, 0.005, 50);
-camera.position.set(0.62, 0.5, 0.68);
+camera.position.set(0.75, 0.6, 0.82);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0,0,0);
 controls.enableDamping = false;   // camera stops the moment you let go
@@ -636,7 +636,7 @@ document.querySelectorAll('#speedSeg button').forEach(b=>b.addEventListener('cli
 
 // camera views
 let camTween=null;
-const V0 = new THREE.Vector3(0.62,0.5,0.68);
+const V0 = new THREE.Vector3(0.75,0.6,0.82);
 function goView(pos, done){ camTween={t:0, p0:camera.position.clone(), p1:pos.clone(), t0:controls.target.clone(), done}; }
 function zoomBy(f){   // f>1 zooms out
   { const off = camera.position.clone().sub(controls.target); const d = THREE.MathUtils.clamp(off.length()*f, controls.minDistance, controls.maxDistance);
@@ -650,8 +650,8 @@ $('zReset').addEventListener('click',()=>{
     goView(off);
   }
 });
-$('btnTop').addEventListener('click',()=>goView(new THREE.Vector3(0,1.25,0.0001)));
-$('btn3d').addEventListener('click',()=>goView(new THREE.Vector3(0.62,0.5,0.68)));
+$('btnTop').addEventListener('click',()=>goView(new THREE.Vector3(0,1.5,0.0001)));
+$('btn3d').addEventListener('click',()=>goView(new THREE.Vector3(0.75,0.6,0.82)));
 
 // init UI
 $('rVal').textContent=`${(S.r*100).toFixed(1)} cm`; $('mVal').textContent=`${mS.value} g`;
