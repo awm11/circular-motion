@@ -315,7 +315,7 @@ scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x1a1a22, 0.6));
 const sun = new THREE.DirectionalLight(0xffffff, 1.6);
 sun.position.set(0.6,1.4,0.5);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048,2048);
+sun.shadow.mapSize.set(1024,1024);
 Object.assign(sun.shadow.camera,{left:-0.6,right:0.6,top:0.6,bottom:-0.6,near:0.1,far:4});
 sun.shadow.bias = -0.0004;
 scene.add(sun);
@@ -458,7 +458,7 @@ function thickArrow(hex, opacity=1, order=10){
       shaft.scale.set(tk, Math.max(L-hl,1e-4), tk);
       shaft.position.set(0,(L-hl)/2,0); head.position.set(0,L-hl/2,0);
       grp.position.copy(origin);
-      q.setFromUnitVectors(up, dir.clone().normalize()); grp.quaternion.copy(q);
+      q.setFromUnitVectors(up, dir.normalize()); grp.quaternion.copy(q);
     },
     hide(){ grp.visible=false; }
   };
@@ -477,23 +477,37 @@ const trailMats = [];
 function makeTrail(hex, parent){
   const mat = new LineMaterial({color:hex, linewidth:TRAIL_PX, transparent:true, opacity:.95, worldUnits:false});
   trailMats.push(mat);
-  const line = new Line2(new LineGeometry(), mat);
+  // one fixed-size geometry, allocated once: new points are written in place and only
+  // the changed part is uploaded to the GPU (no per-frame rebuilds or garbage)
+  const geo = new LineGeometry(); geo.setPositions(new Float32Array(TMAX*3));
+  const buf = geo.attributes.instanceStart.data, seg = buf.array;   // 6 floats per segment
+  geo.instanceCount = 0;
+  const line = new Line2(geo, mat);
   line.frustumCulled = false; line.renderOrder = 5; line.visible = false;
   parent.add(line);
-  return {line, arr:new Float32Array(TMAX*3), n:0, dirty:false, on:true,
+  return {line, n:0, lx:0, ly:0, lz:0, from:-1, full:false,
     push(x,y,z){
-      if(this.n>=TMAX){ this.arr.copyWithin(0,3); this.n=TMAX-1; }
-      const i=this.n*3;
-      if(this.n>0){ const dx=x-this.arr[i-3], dy=y-this.arr[i-2], dz=z-this.arr[i-1]; if(dx*dx+dy*dy+dz*dz<1e-7) return; }
-      this.arr[i]=x; this.arr[i+1]=y; this.arr[i+2]=z; this.n++; this.dirty=true;
+      if(this.n>0){ const dx=x-this.lx, dy=y-this.ly, dz=z-this.lz; if(dx*dx+dy*dy+dz*dz<1e-7) return; }
+      if(this.n>=TMAX){            // drop the oldest half in one go (rare), then upload everything
+        const half=TMAX>>1; seg.copyWithin(0, half*6, (this.n-1)*6); this.n-=half; this.full=true;
+      }
+      if(this.n>0){
+        const k=(this.n-1)*6;
+        seg[k]=this.lx; seg[k+1]=this.ly; seg[k+2]=this.lz; seg[k+3]=x; seg[k+4]=y; seg[k+5]=z;
+        if(this.from<0) this.from=this.n-1;
+      }
+      this.lx=x; this.ly=y; this.lz=z; this.n++;
     },
     sync(){
-      if(!this.dirty) return; this.dirty=false;
-      if(this.n<2) return;
-      const geo = new LineGeometry(); geo.setPositions(this.arr.subarray(0,this.n*3));
-      this.line.geometry.dispose(); this.line.geometry = geo; this.line.computeLineDistances?.();
+      if(this.full){ this.full=false; this.from=-1; buf.clearUpdateRanges?.(); buf.needsUpdate=true; }
+      else if(this.from>=0){
+        const off=this.from*6, cnt=(this.n-1-this.from)*6;
+        if(buf.addUpdateRange) buf.addUpdateRange(off,cnt); else buf.updateRange={offset:off,count:cnt};
+        buf.needsUpdate=true; this.from=-1;
+      }
+      geo.instanceCount = Math.max(0,this.n-1);
     },
-    clear(){ this.n=0; this.dirty=false; this.line.geometry.dispose(); this.line.geometry=new LineGeometry(); }
+    clear(){ this.n=0; this.from=-1; this.full=false; geo.instanceCount=0; }
   };
 }
 const trailGround = makeTrail(0xff3fd2, scene);
@@ -633,6 +647,9 @@ setWSliderMode(); onMu(); resetCoin();
 
 // ---------- readouts ----------
 const badge=$('badge');
+let lastEq='';
+const _tc={};
+function setT(id,v){ if(_tc[id]!==v){ _tc[id]=v; $(id).textContent=v; } }
 function updateReadout(){
   const w=S.omega, f=w/(2*Math.PI), T=w>1e-6?1/f:Infinity;
   const onTable = S.state==='grip'||S.state==='slip';
@@ -641,32 +658,33 @@ function updateReadout(){
   const aC = w*w*r;
   const Fneed = S.m*len(S.aReq), Fmax=S.mus*S.m*g, Fk=S.mus*MUK*S.m*g;
   const Fact = len(S.fric);
-  $('o_w').textContent = `${fmt(w)} rad s⁻¹`;
-  $('o_f').textContent = `${fmt(f,3)} Hz`;
-  $('o_T').textContent = Number.isFinite(T)?`${fmt(T)} s`:'∞';
-  $('o_r').textContent = onTable?`${fmt(r*100,1)} cm`:'—';
-  $('o_v').textContent = `${fmt(v)} m s⁻¹`;
-  $('o_a').textContent = onTable?`${sig(aC)} m s⁻²`:'—';
-  $('o_F').textContent = `${sig(Fact)} N`;
-  $('o_Fc').textContent = onTable?`${sig(S.m*aC)} N`:'—';
-  $('o_W').textContent = `${sig(S.m*g)} N`;
-  $('o_R').textContent = S.state!=='fall'?`${sig(S.m*g)} N`:'0 N';
+  setT('o_w', `${fmt(w)} rad s⁻¹`);
+  setT('o_f', `${fmt(f,3)} Hz`);
+  setT('o_T', Number.isFinite(T)?`${fmt(T)} s`:'∞');
+  setT('o_r', onTable?`${fmt(r*100,1)} cm`:'—');
+  setT('o_v', `${fmt(v)} m s⁻¹`);
+  setT('o_a', onTable?`${sig(aC)} m s⁻²`:'—');
+  setT('o_F', `${sig(Fact)} N`);
+  setT('o_Fc', onTable?`${sig(S.m*aC)} N`:'—');
+  setT('o_W', `${sig(S.m*g)} N`);
+  setT('o_R', S.state!=='fall'?`${sig(S.m*g)} N`:'0 N');
   const ratio = onTable ? Fneed/Fmax : 0;
-  $('o_ratio').textContent = onTable?fmt(ratio,2):'—';
-  const fill=$('g_fill'); fill.style.width = Math.min(ratio/1.5,1)*100+'%';
+  setT('o_ratio', onTable?fmt(ratio,2):'—');
+  const fill=$('g_fill'); const gw=(Math.min(ratio/1.5,1)*100).toFixed(1)+'%'; if(fill.style.width!==gw) fill.style.width = gw;
   fill.style.background = ratio<0.8?'var(--grip)':ratio<1?'#e6c44a':'var(--off)';
   const st = {grip:['GRIPPING','grip'], slip:['SLIPPING','slip'], fall:['OFF THE TABLE','off'], landed:['OFF THE TABLE','off']}[S.state];
-  badge.textContent=st[0]; badge.className='badge '+st[1];
+  if(badge.textContent!==st[0]){ badge.textContent=st[0]; badge.className='badge '+st[1]; }
 
   const rr=S.r, m=S.m, wc=Math.sqrt(S.mus*g/rr), fc=wc/(2*Math.PI);
   const tang = Math.abs(S.alpha)>1e-6 && S.state==='grip';
-  $('eq').innerHTML =
+  const eqHTML =
     `<div class="eqi"><span class="c">Needed (centripetal):</span><br>F = mω²r = ${sig(m)} × ${fmt(w)}² × ${fmt(rr,3)} = <b>${sig(m*w*w*rr)} N</b>`+
     (tang?`<br><span class="c">+ tangential while ramping:</span> mαr = ${sig(m*Math.abs(S.alpha)*rr)} N`:'')+`</div>`+
     `<div class="eqi"><span class="c">Max static friction:</span><br>F<sub>max</sub> = μ<sub>s</sub>mg = ${S.mus.toFixed(2)} × ${sig(m)} × 9.81 = <b>${sig(Fmax)} N</b></div>`+
     `<div class="eqi"><span class="c">Kinetic friction (when slipping):</span><br>F<sub>k</sub> = μ<sub>k</sub>mg = <b>${sig(Fk)} N</b></div>`+
     `<div class="eqi"><span class="c">Slips when mω²r &gt; μ<sub>s</sub>mg, i.e.</span><br>ω<sub>crit</sub> = √(μ<sub>s</sub>g / r) = <b>${fmt(wc)} rad s⁻¹</b> (f = ${fmt(fc,3)} Hz)</div>`+
     `<div class="eqi"><span class="c">Speed:</span><br>v = ωr = ${fmt(w)} × ${fmt(rr,3)} = <b>${fmt(w*rr)} m s⁻¹</b></div>`;
+  if(eqHTML!==lastEq){ lastEq=eqHTML; $('eq').innerHTML=eqHTML; }
 }
 
 // ---------- render loop ----------
@@ -696,7 +714,7 @@ function frame(now){
     if(S.state!=='landed' || len(S.v)>0) trailGround.push(S.p.x, S.y-COIN_H/2+0.0012, -S.p.y);
     if(S.state==='grip'||S.state==='slip'){ const l=rot(S.p,-S.theta); trailTable.push(l.x, 0.0012, -l.y); }
   }
-  trailSync += dt; if(trailSync>0.033){ trailSync=0; trailGround.sync(); trailTable.sync(); }
+  trailGround.sync(); trailTable.sync();
   trailGround.line.visible = show.trail && show.frame!=='table' && trailGround.n>1;
   trailTable.line.visible  = show.trail && show.frame!=='ground' && trailTable.n>1;
 
