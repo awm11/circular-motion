@@ -385,15 +385,39 @@ function makeSurface(key){
       x.beginPath(); x.moveTo(0,y); for(let X=0;X<=N;X+=32) x.lineTo(X, y+Math.sin(X/90+i)*6+Math.sin(X/23)*2); x.stroke(); }
     for(let i=0;i<5;i++){ const kx=rnd()*N, ky=rnd()*N; for(let k=1;k<6;k++){ x.strokeStyle='rgba(80,45,20,.35)'; x.beginPath(); x.ellipse(kx,ky,k*7,k*3,0,0,Math.PI*2); x.stroke(); } }
   } else if(key==='cork'){
-    x.fillStyle='#c59a63'; x.fillRect(0,0,N,N);
-    for(let i=0;i<26000;i++){ const s=rnd()*3.2; x.fillStyle=rnd()<.5?`rgba(120,75,35,${.3+rnd()*.5})`:`rgba(230,200,150,${.2+rnd()*.4})`; x.fillRect(rnd()*N,rnd()*N,s,s); }
+    // darker, warmer cork: mottled base, granules, a few dark pits
+    x.fillStyle='#8f6236'; x.fillRect(0,0,N,N);
+    for(let i=0;i<180;i++){ const px=rnd()*N, py=rnd()*N, r=30+rnd()*90; const g2=x.createRadialGradient(px,py,0,px,py,r);
+      g2.addColorStop(0, rnd()<.5?'rgba(60,35,15,.18)':'rgba(190,140,85,.14)'); g2.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=g2; x.fillRect(px-r,py-r,2*r,2*r); }
+    for(let i=0;i<30000;i++){ const sz=1+rnd()*3.4, t=rnd();
+      x.fillStyle = t<.55?`rgba(70,40,18,${.35+rnd()*.45})` : t<.9?`rgba(165,115,65,${.3+rnd()*.4})` : `rgba(205,160,105,${.25+rnd()*.3})`;
+      x.fillRect(rnd()*N,rnd()*N,sz,sz*(.6+rnd()*.8)); }
+    for(let i=0;i<260;i++){ x.fillStyle=`rgba(35,18,6,${.5+rnd()*.4})`; x.beginPath(); x.ellipse(rnd()*N,rnd()*N,1.5+rnd()*3,1+rnd()*2,rnd()*3,0,Math.PI*2); x.fill(); }
   } else if(key==='rubber'){
-    x.fillStyle='#24272c'; x.fillRect(0,0,N,N);
-    for(let r=20;r<cx;r+=11){ x.strokeStyle='rgba(0,0,0,.55)'; x.lineWidth=4; x.beginPath(); x.arc(cx,cx,r,0,Math.PI*2); x.stroke();
-      x.strokeStyle='rgba(255,255,255,.05)'; x.lineWidth=1; x.beginPath(); x.arc(cx,cx,r+3,0,Math.PI*2); x.stroke(); }
+    // ribbed rubber mat: broken rings, radial grip grooves, scuffs, a moulded label
+    x.fillStyle='#25282d'; x.fillRect(0,0,N,N);
+    for(let r=20;r<cx;r+=11){ const a0=rnd()*Math.PI*2, span=Math.PI*(1.3+rnd()*0.7);
+      x.strokeStyle='rgba(0,0,0,.55)'; x.lineWidth=4; x.beginPath(); x.arc(cx,cx,r,a0,a0+span); x.stroke();
+      x.strokeStyle='rgba(255,255,255,.06)'; x.lineWidth=1; x.beginPath(); x.arc(cx,cx,r+3,a0,a0+span); x.stroke(); }
+    for(let i=0;i<24;i++){ const a=i/24*Math.PI*2+(rnd()-.5)*.08, r0=cx*(i%2?0.35:0.18), r1=cx*0.97;
+      x.strokeStyle='rgba(0,0,0,.6)'; x.lineWidth=i%3===0?7:4; x.beginPath(); x.moveTo(cx+Math.cos(a)*r0,cx+Math.sin(a)*r0); x.lineTo(cx+Math.cos(a)*r1,cx+Math.sin(a)*r1); x.stroke();
+      x.strokeStyle='rgba(255,255,255,.05)'; x.lineWidth=1; x.beginPath(); x.moveTo(cx+Math.cos(a+.006)*r0,cx+Math.sin(a+.006)*r0); x.lineTo(cx+Math.cos(a+.006)*r1,cx+Math.sin(a+.006)*r1); x.stroke(); }
+    for(let i=0;i<40;i++){ const px=cx+(rnd()-.5)*N*.85, py=cx+(rnd()-.5)*N*.85, r=10+rnd()*45; const g2=x.createRadialGradient(px,py,0,px,py,r);
+      g2.addColorStop(0,`rgba(150,155,165,${.05+rnd()*.08})`); g2.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=g2; x.beginPath(); x.ellipse(px,py,r,r*(.3+rnd()*.5),rnd()*3,0,Math.PI*2); x.fill(); }
+    x.save(); x.translate(cx,cx); x.rotate(2.3); x.fillStyle='rgba(255,255,255,.10)'; x.font='bold 30px sans-serif'; x.textAlign='center';
+    x.fillText('NON-SLIP', 0, -cx*0.6); x.restore();
   } else {
-    x.fillStyle='#6b5a48'; x.fillRect(0,0,N,N);
-    for(let i=0;i<120000;i++){ const v=rnd(); x.fillStyle=v<.5?`rgba(30,22,15,${.5*rnd()+.2})`:`rgba(${190+rnd()*50},${170+rnd()*40},${130+rnd()*30},${.5*rnd()+.1})`; x.fillRect(rnd()*N,rnd()*N,1.6,1.6); }
+    // sandpaper: dark backing with raised grains (lit top-left, shadowed bottom-right) and worn patches
+    x.fillStyle='#7d4630'; x.fillRect(0,0,N,N);
+    for(let i=0;i<70;i++){ const px=rnd()*N, py=rnd()*N, r=40+rnd()*120; const g2=x.createRadialGradient(px,py,0,px,py,r);
+      g2.addColorStop(0, rnd()<.6?'rgba(170,100,70,.16)':'rgba(40,15,8,.22)'); g2.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=g2; x.fillRect(px-r,py-r,2*r,2*r); }
+    for(let i=0;i<70000;i++){ const px=rnd()*N, py=rnd()*N, sz=0.8+rnd()*2.2;
+      x.fillStyle='rgba(30,10,5,.5)'; x.fillRect(px+0.8,py+0.8,sz,sz);
+      const t=rnd(); x.fillStyle = t<.55?`rgba(${150+rnd()*40},${80+rnd()*30},${55+rnd()*25},.9)` : t<.92?`rgba(${95+rnd()*30},${45+rnd()*20},${30+rnd()*15},.9)` : `rgba(${215+rnd()*35},${170+rnd()*40},${140+rnd()*40},.85)`;
+      x.fillRect(px,py,sz,sz); }
+    // worn arcs where things have been dragged round
+    for(let i=0;i<9;i++){ const r=cx*(0.2+rnd()*0.7), a0=rnd()*6.28; x.strokeStyle=`rgba(190,130,100,${.08+rnd()*.08})`; x.lineWidth=6+rnd()*14;
+      x.beginPath(); x.arc(cx,cx,r,a0,a0+0.4+rnd()*1.2); x.stroke(); }
   }
   // radial cm ruler along +x (table frame) so rotation and radius are visible
   x.strokeStyle='rgba(255,255,255,.9)'; x.fillStyle='rgba(255,255,255,.95)';
