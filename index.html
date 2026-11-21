@@ -349,6 +349,20 @@ const grid = new THREE.GridHelper(8, 80, 0x26324d, 0x1b253b); grid.position.y = 
 const plinth = new THREE.Mesh(new THREE.BoxGeometry(PLINTH*2, PLINTH_TOP-FLOOR, PLINTH*2),
   new THREE.MeshStandardMaterial({color:0x2b2f37, roughness:.55, metalness:.1}));
 plinth.position.y = (PLINTH_TOP+FLOOR)/2; plinth.receiveShadow = plinth.castShadow = true; scene.add(plinth);
+// two silver control knobs in the front-right corner of the base
+{
+  const silver = new THREE.MeshStandardMaterial({color:0xd9dde3, metalness:1, roughness:.22});
+  const dark = new THREE.MeshStandardMaterial({color:0x22262c, metalness:.3, roughness:.6});
+  for(const [kx,kz,turn] of [[0.30,0.385,0.6],[0.385,0.30,-0.9]]){
+    const knob = new THREE.Group();
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.019,0.02,0.004,40), silver); skirt.position.y=0.002;
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.0145,0.016,0.014,24), silver); body.position.y=0.011;  // 24 flats read as knurling
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.0125,0.0145,0.002,40), silver); cap.position.y=0.019;
+    const mark = new THREE.Mesh(new THREE.BoxGeometry(0.0022,0.0008,0.009), dark); mark.position.set(0,0.0204,-0.006);
+    for(const m of [skirt,body,cap]){ m.castShadow=true; m.receiveShadow=true; }
+    knob.add(skirt,body,cap,mark); knob.position.set(kx,PLINTH_TOP,kz); knob.rotation.y=turn; scene.add(knob);
+  }
+}
 
 // ---------- surface textures ----------
 function rng(seed){ let s=seed; return ()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0, ((s^s>>>14)>>>0)/4294967296)); }
