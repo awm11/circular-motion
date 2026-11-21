@@ -393,12 +393,12 @@ function makeArrow(hex, opacity=1){
   scene.add(a); return a;
 }
 // ArrowHelper lines are 1px; add thick shafts with a cylinder for visibility
-function thickArrow(hex, opacity=1){
+function thickArrow(hex, opacity=1, order=10){
   const grp = new THREE.Group();
   const mat = new THREE.MeshBasicMaterial({color:hex, transparent:true, opacity, depthTest:false});
   const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.0022,0.0022,1,10), mat);
   const head = new THREE.Mesh(new THREE.ConeGeometry(0.0065,0.018,16), mat);
-  shaft.renderOrder = head.renderOrder = 10;
+  shaft.renderOrder = head.renderOrder = order;
   grp.add(shaft, head); scene.add(grp);
   const up = new THREE.Vector3(0,1,0), q = new THREE.Quaternion();
   return {
@@ -419,7 +419,7 @@ function thickArrow(hex, opacity=1){
 }
 const A = {
   fric: thickArrow(0xff4d5e), need: thickArrow(0xffb020, .55),
-  wt: thickArrow(0x4d9bff), norm: thickArrow(0xb57bff), vel: thickArrow(0x3ddc84),
+  wt: thickArrow(0x4d9bff, 1, 4),   // drawn before the trails (order 5) so the path sits on top norm: thickArrow(0xb57bff), vel: thickArrow(0x3ddc84),
 };
 const FSCALE0 = 0.6;   // metres of arrow per newton at 1× (absolute scale, so mass changes arrow sizes)
 let FK = 1, FSCALE = FSCALE0;
