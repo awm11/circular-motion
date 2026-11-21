@@ -199,7 +199,6 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
       <div class="row"><label>Static friction μ<sub>s</sub></label><span class="val" id="muVal"></span></div>
       <input type="range" id="mu" min="0.10" max="1.20" step="0.01" value="0.50">
       <div class="ticks" id="muTicks"></div>
-      <div class="hint" id="muHint"></div>
     </div>
   </section>
   </div>
@@ -592,7 +591,6 @@ let currentSurf=null;
 function onMu(){
   S.mus=+muS.value; const s=surfOf(S.mus);
   $('muVal').textContent=`${S.mus.toFixed(2)}`;
-  $('muHint').textContent=`${s.name} · μs = ${S.mus.toFixed(2)}, μk = ${(S.mus*MUK).toFixed(2)}`;
   $('surfName').textContent=s.name;
   if(currentSurf!==s.key){ currentSurf=s.key; disk.material=surfMats[s.key]; }
 }
