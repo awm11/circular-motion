@@ -75,9 +75,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
 .rohead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .rotoggle{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#1a1405;border:0;font-weight:600;font-size:17.8px;padding:5px 11px;border-radius:7px;box-shadow:0 2px 8px rgba(242,184,75,.3)}
 .rotoggle:hover{filter:brightness(1.08)}
-#readout.collapsed{width:auto}
 #readout.collapsed #roBody{display:none}
-#readout.collapsed .badge{margin-bottom:0}
 .badge{display:inline-block;font-weight:700;font-size:17.3px;letter-spacing:.08em;padding:4px 9px;border-radius:6px;margin-bottom:10px}
 .badge.grip{background:rgba(60,207,142,.15);color:var(--grip)}
 .badge.slip{background:rgba(255,159,67,.15);color:var(--slip)}
@@ -128,8 +126,8 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
 </head>
 <body>
 <div id="view">
-  <div class="card" id="readout">
-    <div class="rohead"><div class="badge grip" id="badge">GRIPPING</div><button id="roToggle" class="rotoggle" title="Hide or show the values"><span>Hide values</span></button></div>
+  <div class="card collapsed" id="readout">
+    <div class="rohead"><div class="badge grip" id="badge">GRIPPING</div><button id="roToggle" class="rotoggle" title="Hide or show the values"><span>Show values</span></button></div>
     <div id="roBody">
     <div class="vals">
       <span class="k">Angular velocity ω</span><span class="v" id="o_w">–</span>
@@ -143,10 +141,10 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
       <span class="k">Normal reaction R</span><span class="v" id="o_R">–</span>
       <span class="k">Friction acting</span><span class="v" id="o_F">–</span>
     </div>
+    </div>
     <div class="gauge-l"><span>Force needed ÷ max static friction</span><span id="o_ratio" style="font-family:var(--mono)">–</span></div>
     <div class="gauge"><div class="fill" id="g_fill"></div><div class="mark"></div></div>
     <div class="gauge-s"><span>0</span><span style="position:absolute;left:66.67%;transform:translateX(-50%)">slips at 1</span><span>1.5</span></div>
-    </div>
   </div>
   <div id="viewbtns">
     <button id="btnTop">Bird's-eye view</button>
@@ -340,7 +338,26 @@ function makeSurface(key){
   if(key==='metal'){
     const gr=x.createRadialGradient(cx,cx,0,cx,cx,cx); gr.addColorStop(0,'#c9ced6'); gr.addColorStop(1,'#9aa1ab');
     x.fillStyle=gr; x.fillRect(0,0,N,N);
-    for(let r=4;r<cx;r+=1.3){ x.strokeStyle=`rgba(${rnd()<.5?255:60},${rnd()<.5?255:60},${rnd()<.5?255:70},${0.04+rnd()*0.05})`; x.lineWidth=1; x.beginPath(); x.arc(cx,cx,r,0,Math.PI*2); x.stroke(); }
+    // brushed rings drawn as broken arcs, so the pattern isn't rotationally symmetric
+    for(let r=4;r<cx;r+=1.3){ x.strokeStyle=`rgba(${rnd()<.5?255:60},${rnd()<.5?255:60},${rnd()<.5?255:70},${0.04+rnd()*0.06})`; x.lineWidth=1;
+      const a0=rnd()*Math.PI*2; x.beginPath(); x.arc(cx,cx,r,a0,a0+Math.PI*(0.6+rnd()*1.3)); x.stroke(); }
+    // uneven light/dark sheen sectors
+    if(x.createConicGradient){ const cg=x.createConicGradient(rnd()*6.28,cx,cx);
+      const stops=[[0,.18,1],[.13,0,0],[.27,.22,0],[.41,0,1],[.58,.14,1],[.7,0,0],[.86,.2,0],[1,.18,1]];
+      for(const [p,a,w] of stops) cg.addColorStop(p, w?`rgba(255,255,255,${a})`:`rgba(20,25,35,${a})`);
+      x.fillStyle=cg; x.fillRect(0,0,N,N); }
+    // radial streaks of varying strength
+    for(let i=0;i<220;i++){ const a=rnd()*Math.PI*2, r0=cx*(0.05+rnd()*0.5), r1=r0+cx*(0.1+rnd()*0.45);
+      x.strokeStyle=rnd()<.5?`rgba(255,255,255,${0.04+rnd()*0.1})`:`rgba(30,35,45,${0.05+rnd()*0.12})`; x.lineWidth=0.6+rnd()*2.2;
+      x.beginPath(); x.moveTo(cx+Math.cos(a)*r0, cx+Math.sin(a)*r0); x.lineTo(cx+Math.cos(a)*r1, cx+Math.sin(a)*r1); x.stroke(); }
+    // a few scratches
+    for(let i=0;i<14;i++){ const px=cx+(rnd()-.5)*cx*1.4, py=cx+(rnd()-.5)*cx*1.4, a=rnd()*6.28, L=20+rnd()*90;
+      x.strokeStyle=`rgba(255,255,255,${0.15+rnd()*0.2})`; x.lineWidth=1; x.beginPath(); x.moveTo(px,py); x.lineTo(px+Math.cos(a)*L, py+Math.sin(a)*L); x.stroke(); }
+    // six screw heads, unevenly spaced
+    for(let i=0;i<6;i++){ const a=i*Math.PI/3+(rnd()-.5)*0.5, rr=cx*0.82, sx=cx+Math.cos(a)*rr, sy=cx+Math.sin(a)*rr;
+      const sg=x.createRadialGradient(sx-3,sy-3,1,sx,sy,13); sg.addColorStop(0,'#eef1f5'); sg.addColorStop(1,'#6b727c');
+      x.fillStyle=sg; x.beginPath(); x.arc(sx,sy,12,0,Math.PI*2); x.fill();
+      x.strokeStyle='rgba(30,34,40,.85)'; x.lineWidth=3; const t=rnd()*3; x.beginPath(); x.moveTo(sx-8*Math.cos(t),sy-8*Math.sin(t)); x.lineTo(sx+8*Math.cos(t),sy+8*Math.sin(t)); x.stroke(); }
   } else if(key==='wood'){
     x.fillStyle='#a8743f'; x.fillRect(0,0,N,N);
     for(let i=0;i<260;i++){ const y=rnd()*N; x.strokeStyle=`rgba(${70+rnd()*40},${40+rnd()*20},20,${0.15+rnd()*0.3})`; x.lineWidth=1+rnd()*3;
