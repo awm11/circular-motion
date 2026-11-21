@@ -109,7 +109,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
   .ctl{margin-bottom:10px}
   .hint,.note{font-size:16.3px;line-height:1.35}
   .eq{font-size:16.8px;line-height:1.6;white-space:normal;columns:2;column-gap:22px}
-  .eqsec .notes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .eqsec .notes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   .eqsec .note{margin-top:6px}
 }
 @media (min-width:1800px){ body{grid-template-columns:1fr 820px} }
@@ -185,7 +185,6 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
       <div class="row" style="margin-top:8px">
         <label class="switch"><input type="checkbox" id="hz"><span class="tr"></span>Set in Hz</label>
       </div>
-      <div class="hint">The motor ramps to the new speed at 4 rad s⁻². While it speeds up, friction must also supply a tangential force, so a coin near the limit can slip during spin-up.</div>
     </div>
   </section>
   <section>
@@ -220,7 +219,6 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
     <div class="ctl" style="margin-top:14px">
       <div class="row"><label>Force arrow size</label><span class="val" id="fkVal">1.0×</span></div>
       <input type="range" id="fk" min="0.25" max="4" step="0.05" value="1">
-      <div class="hint">Arrows are drawn to one scale in newtons, so heavier coins get longer arrows. At 1×, 0.1 N is drawn 6 cm long. This slider scales every force arrow together.</div>
     </div>
     <div style="margin-top:4px;display:flex;align-items:center;gap:8px;font-size:18.3px">
       Trail drawn in
@@ -251,7 +249,8 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
   <section class="eqsec">
     <h2>Equations (live)</h2>
     <div class="eq" id="eq"></div>
-    <div class="notes"><div class="note">The mass cancels in mω²r ≤ μ<sub>s</sub>mg, so the critical speed doesn't depend on m. Try changing the mass while the coin is close to slipping.</div>
+    <div class="notes"><div class="note">The motor ramps to the new speed at 4 rad s⁻². While it speeds up, friction must also supply a tangential force, so a coin near the limit can slip during spin-up.</div>
+    <div class="note">The mass cancels in mω²r ≤ μ<sub>s</sub>mg, so the critical speed doesn't depend on m. Try changing the mass while the coin is close to slipping.</div>
     <div class="note">Once slipping, kinetic friction (μ<sub>k</sub> = 0.75 μ<sub>s</sub>) acts against the coin's motion <i>relative to the surface</i>. It's too weak to hold a circle, so the coin spirals outwards and eventually leaves the table on a near-tangent.</div>
     </div>
   </section>
