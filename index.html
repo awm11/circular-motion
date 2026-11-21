@@ -704,7 +704,7 @@ function updateReadout(){
     (tang?`<br><span class="c">+ tangential while ramping:</span> mαr = ${sig(m*Math.abs(S.alpha)*rr)} N`:'')+`</div>`+
     `<div class="eqi"><span class="c">Max static friction:</span><br>F<sub>max</sub> = μ<sub>s</sub>mg = ${S.mus.toFixed(2)} × ${sig(m,2)} × 9.81<br>= <b>${sig(Fmax)} N</b></div>`+
     `<div class="eqi"><span class="c">Kinetic friction (when slipping):</span><br>F<sub>k</sub> = μ<sub>k</sub>mg = <b>${sig(Fk)} N</b></div>`+
-    `<div class="eqi"><span class="c">Slips when mω²r &gt; μ<sub>s</sub>mg, i.e.</span><br>ω<sub>crit</sub> = √(μ<sub>s</sub>g / r) = <b>${fmt(wc)} rad s⁻¹</b> <span style="white-space:nowrap">(f = ${fmt(fc,3)} Hz)</span></div>`+
+    `<div class="eqi"><span class="c">Slips when mω²r &gt; μ<sub>s</sub>mg, i.e.</span><br>ω<sub>crit</sub> = √(μ<sub>s</sub>g / r) = <b>${fmt(wc)} rad s⁻¹</b></div>`+
     `<div class="eqi"><span class="c">Speed:</span><br>v = ωr = ${fmt(w)} × ${fmt(rr,3)} = <b>${fmt(w*rr)} m s⁻¹</b></div>`;
   if(eqHTML!==lastEq){ lastEq=eqHTML; $('eq').innerHTML=eqHTML; }
 }
