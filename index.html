@@ -100,7 +100,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
 .gauge .fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:6px;transition:width .08s}
 .gauge .mark{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;left:66.67%}
 .gauge-s{display:flex;justify-content:space-between;font-size:15.8px;color:var(--muted);margin-top:3px;position:relative}
-.eq{font-family:var(--serif);font-size-adjust:none;font-size:17.8px;line-height:1.75;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:nowrap}
+.eq{font-family:var(--serif);font-size-adjust:none;font-size:17.8px;line-height:1.75;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 9px;overflow-x:auto;white-space:nowrap}
 .eq .c{color:var(--muted)}
 .eqi{break-inside:avoid;margin-bottom:4px}
 .eq b{color:var(--accent);font-weight:600;font-family:var(--mono)}
@@ -114,7 +114,7 @@ select{font:inherit;background:var(--panel2);color:var(--text);border:1px solid 
   section{padding:20px 0 14px}
   .ctl{margin-bottom:10px}
   .hint,.note{font-size:16.3px;line-height:1.35}
-  .eq{font-size:16.8px;line-height:1.6;white-space:normal;columns:2;column-gap:22px}
+  .eq{font-size:16.8px;line-height:1.6;white-space:normal;columns:2;column-gap:30px}
   .eqsec .notes{display:grid;grid-template-columns:1fr 1fr 1.12fr;gap:12px}
   .eqsec .note{margin-top:6px}
 }
@@ -704,7 +704,7 @@ function updateReadout(){
     (tang?`<br><span class="c">+ tangential while ramping:</span> mαr = ${sig(m*Math.abs(S.alpha)*rr)} N`:'')+`</div>`+
     `<div class="eqi"><span class="c">Max static friction:</span><br>F<sub>max</sub> = μ<sub>s</sub>mg = ${S.mus.toFixed(2)} × ${sig(m)} × 9.81 = <b>${sig(Fmax)} N</b></div>`+
     `<div class="eqi"><span class="c">Kinetic friction (when slipping):</span><br>F<sub>k</sub> = μ<sub>k</sub>mg = <b>${sig(Fk)} N</b></div>`+
-    `<div class="eqi"><span class="c">Slips when mω²r &gt; μ<sub>s</sub>mg, i.e.</span><br>ω<sub>crit</sub> = √(μ<sub>s</sub>g / r) = <b>${fmt(wc)} rad s⁻¹</b> (f = ${fmt(fc,3)} Hz)</div>`+
+    `<div class="eqi"><span class="c">Slips when mω²r &gt; μ<sub>s</sub>mg, i.e.</span><br>ω<sub>crit</sub> = √(μ<sub>s</sub>g / r) = <b>${fmt(wc)} rad s⁻¹</b> <span style="white-space:nowrap">(f = ${fmt(fc,3)} Hz)</span></div>`+
     `<div class="eqi"><span class="c">Speed:</span><br>v = ωr = ${fmt(w)} × ${fmt(rr,3)} = <b>${fmt(w*rr)} m s⁻¹</b></div>`;
   if(eqHTML!==lastEq){ lastEq=eqHTML; $('eq').innerHTML=eqHTML; }
 }
