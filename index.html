@@ -353,7 +353,7 @@ plinth.position.y = (PLINTH_TOP+FLOOR)/2; plinth.receiveShadow = plinth.castShad
 {
   const silver = new THREE.MeshStandardMaterial({color:0xd9dde3, metalness:1, roughness:.22});
   const dark = new THREE.MeshStandardMaterial({color:0x22262c, metalness:.3, roughness:.6});
-  for(const [kx,kz,turn] of [[0.300,0.385,0.6],[0.390,0.385,-0.9]]){   // side by side along the front edge
+  for(const [kx,kz,turn] of [[0.270,0.355,0.6],[0.360,0.355,-0.9]]){   // side by side along the front edge
     const knob = new THREE.Group();
     const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.019,0.02,0.004,40), silver); skirt.position.y=0.002;
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.0145,0.016,0.014,24), silver); body.position.y=0.011;  // 24 flats read as knurling
