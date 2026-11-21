@@ -430,7 +430,8 @@ function thickArrow(hex, opacity=1, order=10){
 }
 const A = {
   fric: thickArrow(0xff4d5e), need: thickArrow(0xffb020, .55),
-  wt: thickArrow(0x4d9bff, 1, 4),   // drawn before the trails (order 5) so the path sits on top norm: thickArrow(0xb57bff), vel: thickArrow(0x3ddc84),
+  wt: thickArrow(0x4d9bff, 1, 4),   // drawn before the trails (order 5) so the path sits on top
+  norm: thickArrow(0xb57bff), vel: thickArrow(0x3ddc84),
 };
 const FSCALE0 = 0.6;   // metres of arrow per newton at 1× (absolute scale, so mass changes arrow sizes)
 let FK = 1, FSCALE = FSCALE0;
