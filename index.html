@@ -416,7 +416,7 @@ function makeSurface(key){
       g2.addColorStop(0, rnd()<.5?`rgba(75,88,108,${.16+rnd()*.12})`:`rgba(100,85,75,${.13+rnd()*.1})`); g2.addColorStop(1,'rgba(0,0,0,0)');
       x.fillStyle=g2; x.fillRect(px-r,py-r,2*r,2*r); }
     // faint scuffs: short light strokes in random directions
-    for(let i=0;i<55;i++){ const px=cx+(rnd()-.5)*N*.9, py=cx+(rnd()-.5)*N*.9, a=rnd()*6.28, L=12+rnd()*55;
+    for(let i=0;i<18;i++){ const px=cx+(rnd()-.5)*N*.9, py=cx+(rnd()-.5)*N*.9, a=rnd()*6.28, L=12+rnd()*55;
       x.strokeStyle=`rgba(200,205,215,${.07+rnd()*.09})`; x.lineWidth=1+rnd()*2.5; x.lineCap='round';
       x.beginPath(); x.moveTo(px,py); x.quadraticCurveTo(px+Math.cos(a+.3)*L*.5,py+Math.sin(a+.3)*L*.5,px+Math.cos(a)*L,py+Math.sin(a)*L); x.stroke(); }
   } else {
