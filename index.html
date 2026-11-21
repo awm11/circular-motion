@@ -353,7 +353,7 @@ plinth.position.y = (PLINTH_TOP+FLOOR)/2; plinth.receiveShadow = plinth.castShad
 {
   const silver = new THREE.MeshStandardMaterial({color:0xd9dde3, metalness:1, roughness:.22});
   const dark = new THREE.MeshStandardMaterial({color:0x22262c, metalness:.3, roughness:.6});
-  for(const [kx,kz,turn] of [[0.30,0.385,0.6],[0.385,0.30,-0.9]]){
+  for(const [kx,kz,turn] of [[0.318,0.385,0.6],[0.378,0.385,-0.9]]){   // side by side along the front edge
     const knob = new THREE.Group();
     const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.019,0.02,0.004,40), silver); skirt.position.y=0.002;
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.0145,0.016,0.014,24), silver); body.position.y=0.011;  // 24 flats read as knurling
@@ -572,11 +572,37 @@ function makeTrail(hex, parent){
 const trailGround = makeTrail(0xff3fd2, scene);
 const trailTable  = makeTrail(0x45d6ff, table);
 
+// While the coin grips, the ground-frame trail is a fading arc covering the last 300° of travel.
+// When it first slips, that arc is frozen in place and the full trail is recorded from then on.
+const ARC_BANDS = 12, ARC_PTS = 10, ARC_SPAN = 300*Math.PI/180;
+const arcBands = [];
+for(let i=0;i<ARC_BANDS;i++){
+  const mat = new LineMaterial({color:0xff3fd2, linewidth:TRAIL_PX, transparent:true, opacity:.95*Math.pow((i+1)/ARC_BANDS,1.4), worldUnits:false, depthWrite:false});
+  trailMats.push(mat);
+  const geo = new LineGeometry(); geo.setPositions(new Float32Array(ARC_PTS*3));
+  const line = new Line2(geo, mat); line.frustumCulled=false; line.renderOrder=5; line.visible=false; scene.add(line);
+  arcBands.push({line, buf:geo.attributes.instanceStart.data});
+}
+let arcAccum = 0, arcFrozen = false, lastTheta = 0;
+function updateArc(){
+  const r=len(S.p), a1=Math.atan2(S.p.y,S.p.x), y=S.y-COIN_H/2+0.0012, span=Math.min(ARC_SPAN,arcAccum);
+  for(let i=0;i<ARC_BANDS;i++){
+    const seg=arcBands[i].buf.array, aStart=a1-span+span*i/ARC_BANDS, da=span/ARC_BANDS/(ARC_PTS-1);
+    let px=r*Math.cos(aStart), pz=-r*Math.sin(aStart);
+    for(let j=1;j<ARC_PTS;j++){
+      const a=aStart+da*j, nx=r*Math.cos(a), nz=-r*Math.sin(a), k=(j-1)*6;
+      seg[k]=px; seg[k+1]=y; seg[k+2]=pz; seg[k+3]=nx; seg[k+4]=y; seg[k+5]=nz; px=nx; pz=nz;
+    }
+    arcBands[i].buf.needsUpdate=true;
+  }
+}
+function clearArc(){ arcAccum=0; arcFrozen=false; lastTheta=S.theta; }
+
 // ---------- physics ----------
 function resetCoin(){
   S.state='grip'; S.pr={x:S.r, y:0}; S.p=rot(S.pr,S.theta);
   S.v={x:-S.omega*S.p.y, y:S.omega*S.p.x}; S.y=COIN_H/2; S.vy=0; S.yaw=S.theta; S.spin=0;
-  trailGround.clear(); trailTable.clear();
+  trailGround.clear(); trailTable.clear(); clearArc();
 }
 function step(dt){
   // motor
@@ -676,7 +702,7 @@ $('fk').addEventListener('input',e=>{ FK=+e.target.value; FSCALE=FSCALE0*FK; $('
 $('trailFrame').addEventListener('change',e=>show.frame=e.target.value);
 $('btnPlay').addEventListener('click',()=>{ S.paused=!S.paused; $('btnPlay').textContent=S.paused?'Play':'Pause'; });
 $('btnReset').addEventListener('click',resetCoin);
-$('btnClear').addEventListener('click',()=>{ trailGround.clear(); trailTable.clear(); });
+$('btnClear').addEventListener('click',()=>{ trailGround.clear(); trailTable.clear(); const f=arcFrozen; clearArc(); arcFrozen=f; });
 document.querySelectorAll('#speedSeg button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('#speedSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); S.timeScale=+b.dataset.s; }));
 
@@ -770,12 +796,17 @@ function frame(now){
 
   // trails
   if(!S.paused){
-    if(S.state!=='landed' || len(S.v)>0) trailGround.push(S.p.x, S.y-COIN_H/2+0.0012, -S.p.y);
+    if(S.state!=='grip' && !arcFrozen){ arcFrozen=true; }              // first slip: freeze the fading arc
+    if(arcFrozen){ if(S.state!=='landed' || len(S.v)>0) trailGround.push(S.p.x, S.y-COIN_H/2+0.0012, -S.p.y); }
+    else { arcAccum += Math.abs(S.theta-lastTheta); updateArc(); }
     if(S.state==='grip'||S.state==='slip'){ const l=rot(S.p,-S.theta); trailTable.push(l.x, 0.0012, -l.y); }
   }
+  lastTheta=S.theta;
   trailGround.sync(); trailTable.sync();
   trailGround.line.visible = show.trail && show.frame!=='table' && trailGround.n>1;
   trailTable.line.visible  = show.trail && show.frame!=='ground' && trailTable.n>1;
+  const arcOn = show.trail && show.frame!=='table' && arcAccum>0;
+  for(const b of arcBands) b.line.visible = arcOn;
 
   // arrows
   const mg=S.m*g, onTable=S.state==='grip'||S.state==='slip', onSurface=S.state!=='fall';
