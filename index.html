@@ -700,9 +700,9 @@ function updateReadout(){
   const rr=S.r, m=S.m, wc=Math.sqrt(S.mus*g/rr), fc=wc/(2*Math.PI);
   const tang = Math.abs(S.alpha)>1e-6 && S.state==='grip';
   const eqHTML =
-    `<div class="eqi"><span class="c">Needed (centripetal):</span><br>F = mω²r = ${sig(m)} × ${fmt(w)}² × ${fmt(rr,3)} = <b>${sig(m*w*w*rr)} N</b>`+
+    `<div class="eqi"><span class="c">Needed (centripetal):</span><br>F = mω²r = ${sig(m,2)} × ${fmt(w)}² × ${fmt(rr,3)} = <b>${sig(m*w*w*rr)} N</b>`+
     (tang?`<br><span class="c">+ tangential while ramping:</span> mαr = ${sig(m*Math.abs(S.alpha)*rr)} N`:'')+`</div>`+
-    `<div class="eqi"><span class="c">Max static friction:</span><br>F<sub>max</sub> = μ<sub>s</sub>mg = ${S.mus.toFixed(2)} × ${sig(m)} × 9.81 = <b>${sig(Fmax)} N</b></div>`+
+    `<div class="eqi"><span class="c">Max static friction:</span><br>F<sub>max</sub> = μ<sub>s</sub>mg = ${S.mus.toFixed(2)} × ${sig(m,2)} × 9.81 = <b>${sig(Fmax)} N</b></div>`+
     `<div class="eqi"><span class="c">Kinetic friction (when slipping):</span><br>F<sub>k</sub> = μ<sub>k</sub>mg = <b>${sig(Fk)} N</b></div>`+
     `<div class="eqi"><span class="c">Slips when mω²r &gt; μ<sub>s</sub>mg, i.e.</span><br>ω<sub>crit</sub> = √(μ<sub>s</sub>g / r) = <b>${fmt(wc)} rad s⁻¹</b> <span style="white-space:nowrap">(f = ${fmt(fc,3)} Hz)</span></div>`+
     `<div class="eqi"><span class="c">Speed:</span><br>v = ωr = ${fmt(w)} × ${fmt(rr,3)} = <b>${fmt(w*rr)} m s⁻¹</b></div>`;
